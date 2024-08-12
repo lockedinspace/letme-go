@@ -4,6 +4,47 @@ fetch('/version')
     .then(data => {
     document.querySelector('.cliversion').textContent = data;
     })
+fetch('/list')
+    .then(response => response.json())  // Parse the response as JSON
+    .then(data => {
+        const container = document.querySelector('.accounts');
+        container.innerHTML = ''; // Clear any existing content
+
+        const totalItems = data.items.length;
+        
+        // Calculate the number of columns (e.g., 4 columns)
+        const maxColumns = 4;
+        const columnCount = Math.min(maxColumns, totalItems);
+        const rowCount = Math.ceil(totalItems / columnCount);
+
+        // Create the table element
+        const table = document.createElement('table');
+        table.classList.add('accounts');
+
+        for (let row = 0; row < rowCount; row++) {
+            const tableRow = document.createElement('tr');
+
+            for (let col = 0; col < columnCount; col++) {
+                const index = row + col * rowCount;
+                const cell = document.createElement('td');
+
+                if (index < totalItems) {
+                    const button = document.createElement('button');
+                    button.textContent = data.items[index].name;
+                    button.onclick = () => obtainCredentials(data.items[index].name);
+                    cell.appendChild(button);
+                }
+                
+                tableRow.appendChild(cell);
+            }
+
+            table.appendChild(tableRow);
+        }
+
+        // Append the table to the container
+        container.appendChild(table);
+    })
+    .catch(error => console.error('Error:', error));
 fetch('/contexts')
     .then(response => response.json())  // Parse the response as JSON
     .then(data => {
@@ -57,4 +98,38 @@ function changeContext(contextName) {
     })
     .catch(error => console.error('Error:', error));
 }
+function obtainCredentials(contextName) {
+    console.log(`Obtaining credentials for: ${contextName}`);
+    // Add your credential obtaining logic here
+}
 
+function filterAccounts() {
+    const input = document.getElementById('searchBar').value.toLowerCase().trim();
+    const tables = document.getElementsByClassName('accounts');
+    
+    // Assuming there's only one table with class 'accounts'
+    const table = tables[0];
+    const rows = table.getElementsByTagName('tr');
+
+    for (let row of rows) {
+        const cells = row.getElementsByTagName('td');
+        let rowVisible = false;
+
+        for (let cell of cells) {
+            const button = cell.getElementsByTagName('button')[0];
+            if (button) {
+                // Create a regex pattern for fuzzy matching
+                const pattern = new RegExp(input.split('').join('.*'), 'i');
+                if (pattern.test(button.textContent)) {
+                    cell.style.display = '';  // Show the cell
+                    rowVisible = true;
+                } else {
+                    cell.style.display = 'none';  // Hide the cell
+                }
+            }
+        }
+
+        // Hide the row if no cells are visible
+        row.style.display = rowVisible ? '' : 'none';
+    }
+}

@@ -6,15 +6,20 @@
     <meta name="description" content="Use the graphic interface to interact with letme.">
     <title>letme's graphic interface</title>
     <link rel="stylesheet" href="./style.css">
-    <script src="./script.js" defer></script>
   </head>
   <body>
     <header>
         <h1>letme's graphic interface</h1>
     </header>
     <main>
-        <h2>Current context</h2>
+        <h2>Available contexts</h2>
+        <p>Active context marked with green</p>
         <div class="clioutput currentcontext">
+        </div>
+        <h2>Accounts</h2>
+        <input type="text" id="searchBar" placeholder="Search accounts..." onkeyup="filterAccounts()" />
+        <div class="clioutput accounts">
+          
         </div>
     </main>
     <footer>
@@ -26,6 +31,6 @@
         <p><b>Web interface</b></p>
         <p>0.0.1</p>
     </footer>
-    
+  <script src="./script.js" defer></script>
   </body>
 </html>

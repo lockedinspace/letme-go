@@ -24,6 +24,7 @@ var WebserveCmd = &cobra.Command{
 		http.HandleFunc("/version", versionHandler)
 		http.HandleFunc("/contexts", contextHandler)
 		http.HandleFunc("/switch-context", switchContextHandler)
+		http.HandleFunc("/list", listAccountsHandler)
 
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			utils.CheckAndReturnError(err)
@@ -55,6 +56,21 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 	// Execute the command
 	output, err := exec.Command("letme", "--version").CombinedOutput()
 	utils.CheckAndReturnError(err)
+	if r.Method != "GET" {
+        http.Error(w, "Method is not supported.", http.StatusNotFound)
+        return
+    }
+	// Send the output as JSON
+	w.Header().Set("Content-Type", "text/plain")
+	fmt.Fprintf(w, `%s`, string(output))
+}
+func listAccountsHandler(w http.ResponseWriter, r *http.Request) {
+	// Execute the command
+	output, _ := exec.Command("letme", "list", "-o", "json").CombinedOutput()
+	if r.Method != "GET" {
+        http.Error(w, "Method is not supported.", http.StatusNotFound)
+        return
+    }
 	// Send the output as JSON
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprintf(w, `%s`, string(output))
@@ -63,22 +79,13 @@ func contextHandler(w http.ResponseWriter, r *http.Request) {
 	// Execute the command
 	output, err := exec.Command("letme", "config", "get-contexts", "-o", "json").CombinedOutput()
 	utils.CheckAndReturnError(err)
-	// Send the output as JSON
-	w.Header().Set("Content-Type", "text/plain")
-	fmt.Fprintf(w, `%s`, string(output))
-}
-func pingHandler(w http.ResponseWriter, r *http.Request) {
-    if r.URL.Path != "/ping" {
-        http.Error(w, "404 not found.", http.StatusNotFound)
-        return
-    }
-
-    if r.Method != "GET" {
+	if r.Method != "GET" {
         http.Error(w, "Method is not supported.", http.StatusNotFound)
         return
     }
-
-	fmt.Fprintf(w, "Pong!" )
+	// Send the output as JSON
+	w.Header().Set("Content-Type", "text/plain")
+	fmt.Fprintf(w, `%s`, string(output))
 }
 
 func init() {
