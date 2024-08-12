@@ -7,8 +7,12 @@ import (
 	"github.com/spf13/cobra"
 	"net/http"
 	"os/exec"
+	"encoding/json"
 )
 
+type ContextRequest struct {
+	Context string `json:"context"`
+}
 var WebserveCmd = &cobra.Command{
 	Use:   "webserve",
 	Short: "Use letme with a graphic environment.",
@@ -19,12 +23,33 @@ var WebserveCmd = &cobra.Command{
     	http.Handle("/", fileServer) 
 		http.HandleFunc("/version", versionHandler)
 		http.HandleFunc("/contexts", contextHandler)
+		http.HandleFunc("/switch-context", switchContextHandler)
 
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			utils.CheckAndReturnError(err)
 		}
 		
 	},
+}
+func switchContextHandler(w http.ResponseWriter, r *http.Request) {
+	// Decode the incoming JSON request
+	var contextReq ContextRequest
+	err := json.NewDecoder(r.Body).Decode(&contextReq)
+	if err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	// Construct the command to switch context
+	cmd := exec.Command("letme", "config", "switch-context", contextReq.Context)
+
+	// Execute the command
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("Failed to switch context: %s, Output: %s", err, output)
+		http.Error(w, "Failed to switch context", http.StatusInternalServerError)
+		return
+	}
 }
 func versionHandler(w http.ResponseWriter, r *http.Request) {
 	// Execute the command

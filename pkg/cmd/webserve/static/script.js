@@ -40,4 +40,21 @@ fetch('/contexts')
 
 function changeContext(contextName) {
     console.log(`Changing context to: ${contextName}`);
+    fetch(`/switch-context`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ context: contextName }),
+    })
+    .then(response => {
+        if (response.ok) {
+            // If the switch was successful, reload the page
+            location.reload();
+        } else {
+            console.error('Failed to switch context:', response.statusText);
+        }
+    })
+    .catch(error => console.error('Error:', error));
 }
+
