@@ -33,7 +33,8 @@ var GetContexts = &cobra.Command{
 			}
 		case "json":
 			contexts := utils.GetAvalaibleContexts()
-			utils.ContextJsonOutput(contexts)
+			currentContext := utils.GetCurrentContext()
+			utils.ContextJsonOutput(contexts, currentContext)
 		}
 		
 	},

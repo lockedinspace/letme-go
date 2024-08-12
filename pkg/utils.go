@@ -76,6 +76,7 @@ type AccountItems struct {
 
 type ContextItem struct {
 	Name   string `json:"name"`
+	Active string `json:"active,omitempty""`
 }
 type ContextsItems struct {
 	Items  []ContextItem `json:"items"`
@@ -924,16 +925,19 @@ func ListJsonOutput(accountList []DynamoDbAccountConfig) {
 	fmt.Println(string(jsonData))
 }
 
-func ContextJsonOutput(contexts []string) {
+func ContextJsonOutput(contexts []string, currentContext string) {
 	var contextsItems ContextsItems
 	for _, context := range contexts {
-		contextsItems.Items = append(contextsItems.Items, ContextItem{Name: context})
+		if context == currentContext {
+			contextsItems.Items = append(contextsItems.Items, ContextItem{Name: context, Active: "true"})
+		} else {
+			contextsItems.Items = append(contextsItems.Items, ContextItem{Name: context})
+		}
 	}
 
 	sort.Slice(contextsItems.Items, func(i, j int) bool {
 		return contextsItems.Items[i].Name < contextsItems.Items[j].Name
 	})
-
 	jsonData, err := json.MarshalIndent(contextsItems, "", " ")
 	CheckAndReturnError(err)
 	fmt.Println(string(jsonData))

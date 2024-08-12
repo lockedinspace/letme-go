@@ -5,36 +5,39 @@ fetch('/version')
     document.querySelector('.cliversion').textContent = data;
     })
 fetch('/contexts')
-    .then(response => response.text())  // Read the response as plain text
+    .then(response => response.json())  // Parse the response as JSON
     .then(data => {
-        // Parse the data by splitting the text by lines
-        const lines = data.trim().split('\n');
-
-        // Filter out the line that indicates the start of the contexts
-        const contexts = lines.slice(1).map(line => line.trim());
-
         // Get the container where buttons will be added
         const container = document.querySelector('.currentcontext');
         container.innerHTML = ''; // Clear any existing content
 
-        // Loop through each context and create a button
-        contexts.forEach(context => {
-            const button = document.createElement('button');
+        // Loop through each context item
+        data.items.forEach(item => {
+            const { name, active } = item;
 
-            // Check if the context is the active one (starts with '*')
-            if (context.startsWith('*')) {
-                button.textContent = context.replace('*', '').trim(); // Remove the '*' from the text
-                button.classList.add('active'); // Optional: Add a class to style active context
-            } else {
-                button.textContent = context;
+            // Create a div to wrap the button
+            const div = document.createElement('div');
+
+            // Create the button for the context
+            const button = document.createElement('button');
+            button.textContent = name;
+
+            // If the context is active, set the button background color to green
+            if (active === "true") {
+                button.style.backgroundColor = 'lightgreen'; // You can adjust the shade of green as desired
             }
 
             // Add an event listener to the button to call changeContext() when clicked
-            button.addEventListener('click', () => changeContext(button.textContent));
+            button.addEventListener('click', () => changeContext(name));
 
-            // Append the button to the container
-            container.appendChild(button);
+            // Append the button to the div, and then append the div to the container
+            div.appendChild(button);
+            container.appendChild(div);
         });
     })
     .catch(error => console.error('Error:', error));
 });
+
+function changeContext(contextName) {
+    console.log(`Changing context to: ${contextName}`);
+}

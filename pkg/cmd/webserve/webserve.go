@@ -36,7 +36,7 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 }
 func contextHandler(w http.ResponseWriter, r *http.Request) {
 	// Execute the command
-	output, err := exec.Command("letme", "config", "get-contexts").CombinedOutput()
+	output, err := exec.Command("letme", "config", "get-contexts", "-o", "json").CombinedOutput()
 	utils.CheckAndReturnError(err)
 	// Send the output as JSON
 	w.Header().Set("Content-Type", "text/plain")
