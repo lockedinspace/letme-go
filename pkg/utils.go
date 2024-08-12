@@ -74,6 +74,13 @@ type AccountItems struct {
 	Items []AccountItem `json:"items"`
 }
 
+type ContextItem struct {
+	Name   string `json:"name"`
+}
+type ContextsItems struct {
+	Items  []ContextItem `json:"items"`
+}
+
 type ProfileConfig struct {
 	Output string `ini:"output"`
 	Region string `ini:"region"`
@@ -913,6 +920,21 @@ func ListJsonOutput(accountList []DynamoDbAccountConfig) {
 	})
 
 	jsonData, err := json.MarshalIndent(accountItems, "", " ")
+	CheckAndReturnError(err)
+	fmt.Println(string(jsonData))
+}
+
+func ContextJsonOutput(contexts []string) {
+	var contextsItems ContextsItems
+	for _, context := range contexts {
+		contextsItems.Items = append(contextsItems.Items, ContextItem{Name: context})
+	}
+
+	sort.Slice(contextsItems.Items, func(i, j int) bool {
+		return contextsItems.Items[i].Name < contextsItems.Items[j].Name
+	})
+
+	jsonData, err := json.MarshalIndent(contextsItems, "", " ")
 	CheckAndReturnError(err)
 	fmt.Println(string(jsonData))
 }

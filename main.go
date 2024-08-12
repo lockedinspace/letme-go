@@ -5,6 +5,7 @@ import (
 	utils "github.com/lockedinspace/letme/pkg"
 	letme "github.com/lockedinspace/letme/pkg/cmd"
 	_ "github.com/lockedinspace/letme/pkg/cmd/config"
+	_ "github.com/lockedinspace/letme/pkg/cmd/webserve"
 )
 
 func main() {
