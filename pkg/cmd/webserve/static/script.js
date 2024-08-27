@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function() { 
 fetch('/version')
     .then(response => response.text())  // Read the response as plain text
     .then(data => {
@@ -41,10 +41,14 @@ fetch('/list')
             table.appendChild(tableRow);
         }
 
-        // Append the table to the container
         container.appendChild(table);
     })
     .catch(error => console.error('Error:', error));
+fetch('/context-values')
+    .then(response => response.text())  // Read the response as plain text
+    .then(data => {
+        document.querySelector('.currentcontextvalues').textContent = data;
+    })
 fetch('/contexts')
     .then(response => response.json())  // Parse the response as JSON
     .then(data => {
@@ -98,9 +102,59 @@ function changeContext(contextName) {
     })
     .catch(error => console.error('Error:', error));
 }
-function obtainCredentials(contextName) {
-    console.log(`Obtaining credentials for: ${contextName}`);
-    // Add your credential obtaining logic here
+function obtainCredentials(accountName) {
+    console.log(`Obtaining credentials for: ${accountName}`);
+    //check if len(mfa_arn) > 0, prompt for mfa token, else go without mfa token
+    fetch(`/context-values`)
+        .then(response => response.json())
+        .then(data => {
+            const mfaArn = data.AwsMfaArn;
+            // Check if AwsMfaArn is empty or not
+            if (mfaArn && mfaArn.length > 0) {
+                // Prompt the user for MFA token input
+                const mfaToken = prompt("Please enter your MFA token:");
+                
+                // If a token was provided, include it in the request
+                if (mfaToken) {
+                    fetch(`/obtain`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ context: accountName, mfaToken: Number(mfaToken) }),
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // If the switch was successful, reload the page
+                            location.reload();
+                        } else {
+                            console.error('Failed to switch context:', response.statusText);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                } else {
+                    console.error('MFA token is required.');
+                }
+            } else {
+                fetch(`/obtain`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ context: accountName }),
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // If the switch was successful, reload the page
+                        location.reload();
+                    } else {
+                        console.error('Failed to switch context:', response.statusText);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        })
+        .catch(error => console.error('Error fetching context values:', error));
 }
 
 function filterAccounts() {

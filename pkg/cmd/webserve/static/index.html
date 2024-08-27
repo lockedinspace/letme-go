@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Use the graphic interface to interact with letme.">
     <title>letme's graphic interface</title>
+    <link rel="icon" type="image/x-icon" href="img/letme.ico">
     <link rel="stylesheet" href="./style.css">
   </head>
   <body>
@@ -16,10 +17,12 @@
         <p>Active context marked with green</p>
         <div class="clioutput currentcontext">
         </div>
+        <h2>Active context values</h2>
+        <div class="clioutput currentcontextvalues">
+        </div>
         <h2>Accounts</h2>
         <input type="text" id="searchBar" placeholder="Search accounts..." onkeyup="filterAccounts()" />
         <div class="clioutput accounts">
-          
         </div>
     </main>
     <footer>
