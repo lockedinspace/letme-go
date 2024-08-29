@@ -2,59 +2,37 @@ document.addEventListener("DOMContentLoaded", function() {
 fetch('/version')
     .then(response => response.text())  // Read the response as plain text
     .then(data => {
-    document.querySelector('.cliversion').textContent = data;
+    document.querySelector('.version').textContent = data;
     })
 fetch('/list')
     .then(response => response.json())  // Parse the response as JSON
     .then(data => {
-        const container = document.querySelector('.accounts');
-        container.innerHTML = ''; // Clear any existing content
+        const container = document.querySelector('.accounts-list');
 
-        const totalItems = data.items.length;
-        
-        // Calculate the number of columns (e.g., 4 columns)
-        const maxColumns = 4;
-        const columnCount = Math.min(maxColumns, totalItems);
-        const rowCount = Math.ceil(totalItems / columnCount);
+        // Iterate over the items and create a div for each one
+        data.items.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('account-item'); // Add a class for styling
+            itemDiv.textContent = item.name; // Set the name as the text content
 
-        // Create the table element
-        const table = document.createElement('table');
-        table.classList.add('accounts');
+            // Set up the click event to call obtainCredentials
+            itemDiv.onclick = () => obtainCredentials(item.name);
 
-        for (let row = 0; row < rowCount; row++) {
-            const tableRow = document.createElement('tr');
-
-            for (let col = 0; col < columnCount; col++) {
-                const index = row + col * rowCount;
-                const cell = document.createElement('td');
-
-                if (index < totalItems) {
-                    const button = document.createElement('button');
-                    button.textContent = data.items[index].name;
-                    button.onclick = () => obtainCredentials(data.items[index].name);
-                    cell.appendChild(button);
-                }
-                
-                tableRow.appendChild(cell);
-            }
-
-            table.appendChild(tableRow);
-        }
-
-        container.appendChild(table);
+            // Append the div to the container
+            container.appendChild(itemDiv);
+        });
     })
     .catch(error => console.error('Error:', error));
 fetch('/context-values')
     .then(response => response.text())  // Read the response as plain text
     .then(data => {
-        document.querySelector('.currentcontextvalues').textContent = data;
+        document.querySelector('.active-context-values').textContent = data;
     })
 fetch('/contexts')
     .then(response => response.json())  // Parse the response as JSON
     .then(data => {
         // Get the container where buttons will be added
-        const container = document.querySelector('.currentcontext');
-        container.innerHTML = ''; // Clear any existing content
+        const container = document.querySelector('.contexts');
 
         // Loop through each context item
         data.items.forEach(item => {
@@ -159,31 +137,17 @@ function obtainCredentials(accountName) {
 
 function filterAccounts() {
     const input = document.getElementById('searchBar').value.toLowerCase().trim();
-    const tables = document.getElementsByClassName('accounts');
-    
-    // Assuming there's only one table with class 'accounts'
-    const table = tables[0];
-    const rows = table.getElementsByTagName('tr');
+    const accountItems = document.getElementsByClassName('account-item');
 
-    for (let row of rows) {
-        const cells = row.getElementsByTagName('td');
-        let rowVisible = false;
+    for (let item of accountItems) {
+        // Create a regex pattern for fuzzy matching
+        const pattern = new RegExp(input.split('').join('.*'), 'i');
 
-        for (let cell of cells) {
-            const button = cell.getElementsByTagName('button')[0];
-            if (button) {
-                // Create a regex pattern for fuzzy matching
-                const pattern = new RegExp(input.split('').join('.*'), 'i');
-                if (pattern.test(button.textContent)) {
-                    cell.style.display = '';  // Show the cell
-                    rowVisible = true;
-                } else {
-                    cell.style.display = 'none';  // Hide the cell
-                }
-            }
+        // Check if the item text matches the pattern
+        if (pattern.test(item.textContent.toLowerCase())) {
+            item.style.display = ''; // Show the item if it matches
+        } else {
+            item.style.display = 'none'; // Hide the item if it doesn't match
         }
-
-        // Hide the row if no cells are visible
-        row.style.display = rowVisible ? '' : 'none';
     }
 }
