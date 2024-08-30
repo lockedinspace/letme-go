@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var currentVersion = "v0.2.1"
-var versionPrettyName = "New Horizons"
+var currentVersion = "v0.2.2-rc1"
+var versionPrettyName = "Refurbished beagle"
 var RootCmd = &cobra.Command{
 	Use:   "letme",
 	Short: "A reliable, secure and fast way to switch between AWS accounts.",

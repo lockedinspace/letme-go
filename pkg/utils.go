@@ -1163,3 +1163,30 @@ func ConfigFileHealth() {
 		os.Exit(1)
 	}
 }
+func ActiveAccounts() (string, error) {
+	databaseFileReader, err := os.ReadFile(GetHomeDirectory() + "/.letme/.letme-db")
+	CheckAndReturnError(err)
+
+	var accounts []Account
+	err = json.Unmarshal(databaseFileReader, &accounts)
+	CheckAndReturnError(err)
+
+	currentTime := time.Now().Unix()
+
+	activeAccounts := make(map[string]map[string]int64)
+
+	for _, account := range accounts {
+		if account.Account.LastRequest <= currentTime && currentTime <= account.Account.Expiry {
+			activeAccounts[account.Account.Name] = map[string]int64{
+				"expiry": account.Account.Expiry,
+			}
+		}
+	}
+
+	activeAccountsJSON, err := json.MarshalIndent(activeAccounts, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	return string(activeAccountsJSON), nil
+}

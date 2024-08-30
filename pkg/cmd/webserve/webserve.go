@@ -33,6 +33,7 @@ var WebserveCmd = &cobra.Command{
 		http.HandleFunc("/switch-context", switchContextHandler)
 		http.HandleFunc("/list", listAccountsHandler)
 		http.HandleFunc("/obtain", obtainHandler)
+		http.HandleFunc("/active-accounts", activeAccountsHandler)
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			utils.CheckAndReturnError(err)
 		}
@@ -102,6 +103,17 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Method is not supported.", http.StatusNotFound)
         return
     }
+	w.Header().Set("Content-Type", "text/plain")
+	fmt.Fprintf(w, `%s`, string(output))
+}
+func activeAccountsHandler(w http.ResponseWriter, r *http.Request) {
+	output, err := exec.Command("letme", "list", "--active").CombinedOutput()
+	if err != nil {
+		errorMessage := fmt.Sprintf("Failed to list active accounts: %v, Output: %s", err, output)
+    	fmt.Println(errorMessage)
+		http.Error(w, errorMessage, http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprintf(w, `%s`, string(output))
 }

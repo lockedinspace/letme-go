@@ -23,11 +23,55 @@ fetch('/list')
         });
     })
     .catch(error => console.error('Error:', error));
+    fetch('/active-accounts')
+    .then(response => response.json())  // Parse the response as JSON
+    .then(data => {
+        const container = document.querySelector('.active-accounts');
+        const currentTime = Math.floor(Date.now() / 1000); // Current epoch time in seconds
+
+        // Iterate over each item in the data
+        for (const [key, value] of Object.entries(data)) {
+            const expiryTime = value.expiry;
+            const timeLeft = expiryTime - currentTime;
+
+            // Calculate time left in minutes and seconds
+            const minutesLeft = Math.floor(timeLeft / 60);
+            const secondsLeft = timeLeft % 60;
+
+            // Format expiry time as a human-readable string
+            const expiryDate = new Date(expiryTime * 1000);
+            const expiryTimeString = expiryDate.toLocaleTimeString();
+
+            // Create a readable expiry message
+            const message = `${key} - expires in ${minutesLeft} mins at ${expiryTimeString}`;
+
+            // Create a div element to display the message
+            const expiryItem = document.createElement('div');
+            expiryItem.classList.add('expiry-item');
+
+            // Add label and time info
+            const label = document.createElement('div');
+            label.classList.add('label');
+            label.textContent = message;
+            expiryItem.appendChild(label);
+
+            container.appendChild(expiryItem);
+        }
+    })
+    .catch(error => console.error('Error:', error));
 fetch('/context-values')
     .then(response => response.text())  // Read the response as plain text
     .then(data => {
-        document.querySelector('.active-context-values').textContent = data;
+        const container = document.querySelector('.active-context-values');
+
+        // Create a new div for the fetched data
+        const dataDiv = document.createElement('div');
+        dataDiv.textContent = data;
+
+        // Append the new data below the existing <h3>
+        container.appendChild(dataDiv); // Append the new data
     })
+    .catch(error => console.error('Error:', error));
 fetch('/contexts')
     .then(response => response.json())  // Parse the response as JSON
     .then(data => {

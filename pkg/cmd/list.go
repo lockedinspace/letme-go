@@ -25,11 +25,18 @@ var listCmd = &cobra.Command{
 		utils.CheckAndReturnError(err)
 		output, err := cmd.Flags().GetString("output")
 		utils.CheckAndReturnError(err)
-
+		active, _ := cmd.Flags().GetBool("active")
 		if len(filterTags) != 0 {
 			letmeContext.Tags = filterTags
 		}
-
+		if active {
+			activeAccountsJSON, err := utils.ActiveAccounts()
+			utils.CheckAndReturnError(err)
+	
+			fmt.Println(activeAccountsJSON)
+			os.Exit(0)
+		}
+		
 		// fmt.Println(letmeContext.Tags)
 		// os.Exit(0)
 
@@ -54,7 +61,10 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
+	var active bool
 	RootCmd.AddCommand(listCmd)
 	listCmd.Flags().StringArray("filter", []string{}, "a comma delimited list to filter output based on tags")
 	listCmd.Flags().StringP("output", "o", "text", "output results in specific format (text|json)")
+	listCmd.Flags().BoolVarP(&active, "active", "", false, "list accounts which credentials are still valid")
+
 }
