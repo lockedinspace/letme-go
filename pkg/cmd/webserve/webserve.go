@@ -102,10 +102,7 @@ func obtainHandler(w http.ResponseWriter, r *http.Request) {
 	// Determine if MFA token is provided
 	var cmd *exec.Cmd
 	if req.MfaToken > 0 {
-		if req.CredentialProcess {
-			mfaTokenStr := strconv.Itoa(req.MfaToken) // Convert int to string
-			cmd = exec.Command("letme", "obtain", req.Context, "--credential-process", "--inline-mfa", mfaTokenStr)
-		} else if req.Renew {
+		if req.Renew {
 			mfaTokenStr := strconv.Itoa(req.MfaToken) 
 			cmd = exec.Command("letme", "obtain", req.Context, "--renew", "--inline-mfa", mfaTokenStr)
 		} else {
@@ -113,8 +110,8 @@ func obtainHandler(w http.ResponseWriter, r *http.Request) {
 			cmd = exec.Command("letme", "obtain", req.Context, "--inline-mfa", mfaTokenStr)
 		}
 	} else {
-		if req.CredentialProcess {
-			cmd = exec.Command("letme", "obtain", req.Context)
+		if req.CredentialProcess && req.Renew {
+			cmd = exec.Command("letme", "obtain", req.Context, "--renew")
 		} else if req.Renew {
 			cmd = exec.Command("letme", "obtain", req.Context, "--renew")
 		} else {

@@ -1,9 +1,9 @@
 document.addEventListener("DOMContentLoaded", function() { 
-fetch('/version')
-    .then(response => response.text())  // Read the response as plain text
-    .then(data => {
-    document.querySelector('.version').textContent = data;
-    })
+// fetch('/version')
+//     .then(response => response.text())  // Read the response as plain text
+//     .then(data => {
+//     document.querySelector('.version').textContent = data;
+//     })
 fetch('/list')
     .then(response => response.json())  // Parse the response as JSON
     .then(data => {
