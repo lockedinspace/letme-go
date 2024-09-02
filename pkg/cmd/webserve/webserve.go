@@ -10,8 +10,11 @@ import (
 	"strconv"
 	"os/exec"
 	"encoding/json"
+	"embed"
+	"strings"
 )
-
+//go:embed static/*
+var StaticFiles embed.FS
 type ContextRequest struct {
 	Context string `json:"context"`
 }
@@ -24,9 +27,27 @@ var WebserveCmd = &cobra.Command{
 	Short: "Use letme with a graphic environment.",
 	Long:  `Spin up a webserver which will enable the user to interact with letme graphically.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Starting server at port 8080\n")
-		fileServer := http.FileServer(http.Dir("./pkg/cmd/webserve/static")) 
-    	http.Handle("/", fileServer) 
+		fmt.Println("Starting server at http://localhost:8080")
+
+		// Handle requests
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			// Handle root path by serving index.html
+			if r.URL.Path == "/" {
+				r.URL.Path = "/index.html"
+			}
+
+			// Open the file from the embedded filesystem
+			file, err := StaticFiles.ReadFile("static" + r.URL.Path)
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+
+			// Serve the file content
+			w.Header().Set("Content-Type", detectContentType(r.URL.Path))
+			w.WriteHeader(http.StatusOK)
+			w.Write(file)
+		})
 		http.HandleFunc("/version", versionHandler)
 		http.HandleFunc("/contexts", contextHandler)
 		http.HandleFunc("/context-values", contextValuesHandler)
@@ -39,6 +60,21 @@ var WebserveCmd = &cobra.Command{
 		}
 		
 	},
+}
+func detectContentType(path string) string {
+	if strings.HasSuffix(path, ".css") {
+		return "text/css"
+	}
+	if strings.HasSuffix(path, ".js") {
+		return "application/javascript"
+	}
+	if strings.HasSuffix(path, ".html") {
+		return "text/html"
+	}
+	if strings.HasSuffix(path, ".ico") {
+		return "image/x-icon"
+	}
+	return "application/octet-stream"
 }
 func obtainHandler(w http.ResponseWriter, r *http.Request) {
 	// Read the entire body

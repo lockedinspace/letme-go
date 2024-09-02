@@ -9,21 +9,18 @@ fetch('/list')
     .then(data => {
         const container = document.querySelector('.accounts-list');
 
-        // Iterate over the items and create a div for each one
         data.items.forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.classList.add('account-item'); // Add a class for styling
-            itemDiv.textContent = item.name; // Set the name as the text content
+            const itemDiv = document.createElement('button');
+            itemDiv.classList.add('button-14'); 
+            itemDiv.textContent = item.name; 
 
-            // Set up the click event to call obtainCredentials
             itemDiv.onclick = () => obtainCredentials(item.name);
 
-            // Append the div to the container
             container.appendChild(itemDiv);
         });
     })
     .catch(error => console.error('Error:', error));
-    fetch('/active-accounts')
+fetch('/active-accounts')
     .then(response => response.json())  // Parse the response as JSON
     .then(data => {
         const container = document.querySelector('.active-accounts');
@@ -84,14 +81,15 @@ fetch('/contexts')
 
             // Create a div to wrap the button
             const div = document.createElement('div');
-
+            
             // Create the button for the context
             const button = document.createElement('button');
             button.textContent = name;
+            button.classList.add('button-14'); 
 
             // If the context is active, set the button background color to green
             if (active === "true") {
-                button.style.backgroundColor = 'lightgreen'; // You can adjust the shade of green as desired
+                button.classList.add('button-15'); // You can adjust the shade of green as desired
             }
 
             // Add an event listener to the button to call changeContext() when clicked
@@ -181,8 +179,7 @@ function obtainCredentials(accountName) {
 
 function filterAccounts() {
     const input = document.getElementById('searchBar').value.toLowerCase().trim();
-    const accountItems = document.getElementsByClassName('account-item');
-
+    const accountItems = document.getElementsByClassName('button-14');
     for (let item of accountItems) {
         // Create a regex pattern for fuzzy matching
         const pattern = new RegExp(input.split('').join('.*'), 'i');
