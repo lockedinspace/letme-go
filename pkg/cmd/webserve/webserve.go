@@ -21,13 +21,17 @@ type ContextRequest struct {
 type MfaTokenRequest struct {
 	Context string `json:"context"`
     MfaToken int `json:"mfaToken"`
+	CredentialProcess bool `json:"credentialProcess"`
+	Renew bool `json:"renew"`
 }
 var WebserveCmd = &cobra.Command{
 	Use:   "webserve",
+	Aliases: []string{"gui"},
 	Short: "Use letme with a graphic environment.",
 	Long:  `Spin up a webserver which will enable the user to interact with letme graphically.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Starting server at http://localhost:8080")
+		port, _ := cmd.Flags().GetString("port")
+		fmt.Println("Starting server at http://localhost:" + port)
 
 		// Handle requests
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +59,7 @@ var WebserveCmd = &cobra.Command{
 		http.HandleFunc("/list", listAccountsHandler)
 		http.HandleFunc("/obtain", obtainHandler)
 		http.HandleFunc("/active-accounts", activeAccountsHandler)
-		if err := http.ListenAndServe(":8080", nil); err != nil {
+		if err := http.ListenAndServe(":" + port, nil); err != nil {
 			utils.CheckAndReturnError(err)
 		}
 		
@@ -95,10 +99,24 @@ func obtainHandler(w http.ResponseWriter, r *http.Request) {
 	// Determine if MFA token is provided
 	var cmd *exec.Cmd
 	if req.MfaToken > 0 {
-		mfaTokenStr := strconv.Itoa(req.MfaToken) // Convert int to string
-		cmd = exec.Command("letme", "obtain", req.Context, "--inline-mfa", mfaTokenStr)
+		if req.CredentialProcess {
+			mfaTokenStr := strconv.Itoa(req.MfaToken) // Convert int to string
+			cmd = exec.Command("letme", "obtain", req.Context, "--credential-process", "--inline-mfa", mfaTokenStr)
+		} else if req.Renew {
+			mfaTokenStr := strconv.Itoa(req.MfaToken) 
+			cmd = exec.Command("letme", "obtain", req.Context, "--renew", "--inline-mfa", mfaTokenStr)
+		} else {
+			mfaTokenStr := strconv.Itoa(req.MfaToken) 
+			cmd = exec.Command("letme", "obtain", req.Context, "--inline-mfa", mfaTokenStr)
+		}
 	} else {
-		cmd = exec.Command("letme", "obtain", req.Context)
+		if req.CredentialProcess {
+			cmd = exec.Command("letme", "obtain", req.Context)
+		} else if req.Renew {
+			cmd = exec.Command("letme", "obtain", req.Context, "--renew")
+		} else {
+			cmd = exec.Command("letme", "obtain", req.Context)
+		}
 	}
 
 	// Execute the command
@@ -201,4 +219,6 @@ func contextValuesHandler(w http.ResponseWriter, r *http.Request) {
 
 func init() {
 	letme.RootCmd.AddCommand(WebserveCmd)
+	WebserveCmd.Flags().String("port", "", "specify the port to run the webserver")
+
 }

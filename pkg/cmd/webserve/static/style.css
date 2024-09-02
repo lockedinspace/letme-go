@@ -19,7 +19,7 @@
   
   .active-accounts { grid-area: 2 / 3 / 3 / 4; margin: 10px;}
   
-  .accounts { grid-area: 3 / 1 / 4 / 4; margin: 10px; max-height: 200px; overflow-y: auto; padding-top: 0; position: relative;}
+  .accounts { grid-area: 3 / 1 / 4 / 4; margin: 10px; max-height: 400px; overflow-y: auto; padding-top: 0; position: relative;}
   
   .footer { grid-area: 4 / 1 / 5 / 4; margin: 10px;}
   
@@ -36,6 +36,29 @@
 
 .accounts-list {
     margin-top: 10px; /* Small gap between the header and the list */
+}
+.button-13 {
+  background-image: linear-gradient(#f7f8fa ,#e7e9ec);
+  border-color: #adb1b8 #a2a6ac #8d9096;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 3px;
+  box-shadow: rgba(255,255,255,.6) 0 1px 0 inset;
+  box-sizing: border-box;
+  color: #0f1111;
+  cursor: pointer;
+  display: flex;
+  outline: 0;
+  overflow: hidden;
+  padding: 0 11px;
+  text-align: center;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  margin: 10px;
 }
 .button-14 {
   background-image: linear-gradient(#f7f8fa ,#e7e9ec);

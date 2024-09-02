@@ -19,7 +19,15 @@
         <div class="accounts">
           <div class="accounts-header">
               <h3>Accounts</h3>
-              <input type="text" id="searchBar" placeholder="Search accounts..." onkeyup="filterAccounts()" />
+              <p>Click on any account to obtain credentials</p>
+              
+              
+              <input type="checkbox" id="renew" name="renew" value="" onclick="renew()">
+              <label for="renew"> Renew credentials </label>
+              <br>
+              <input type="checkbox" id="credentialprocess" name="credential-process" value="" onclick="credentialProcess()">
+              <label for="credentialprocess"> Use credential-process v1 protocol</label>
+              <br><input type="text" id="searchBar" placeholder="Search accounts..." onkeyup="filterAccounts()" />
             </div>
             <div class="accounts-list"></div>
         </div>

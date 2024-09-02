@@ -85,7 +85,7 @@ fetch('/contexts')
             // Create the button for the context
             const button = document.createElement('button');
             button.textContent = name;
-            button.classList.add('button-14'); 
+            button.classList.add('button-13'); 
 
             // If the context is active, set the button background color to green
             if (active === "true") {
@@ -141,7 +141,7 @@ function obtainCredentials(accountName) {
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ context: accountName, mfaToken: Number(mfaToken) }),
+                        body: JSON.stringify({ context: accountName, mfaToken: Number(mfaToken), credentialProcess: credentialProcess(), renew: renew() }),
                     })
                     .then(response => {
                         if (response.ok) {
@@ -161,7 +161,7 @@ function obtainCredentials(accountName) {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ context: accountName }),
+                    body: JSON.stringify({ context: accountName, credentialProcess: credentialProcess(), renew: renew() }),
                 })
                 .then(response => {
                     if (response.ok) {
@@ -191,4 +191,10 @@ function filterAccounts() {
             item.style.display = 'none'; // Hide the item if it doesn't match
         }
     }
+}
+function credentialProcess(){
+    return document.getElementById('credentialprocess').checked;
+}
+function renew(){
+    return document.getElementById('renew').checked;
 }
