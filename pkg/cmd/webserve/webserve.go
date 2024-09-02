@@ -31,6 +31,9 @@ var WebserveCmd = &cobra.Command{
 	Long:  `Spin up a webserver which will enable the user to interact with letme graphically.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetString("port")
+		if len(port) <= 0 {
+			port = "8080"
+		}
 		fmt.Println("Starting server at http://localhost:" + port)
 
 		// Handle requests
