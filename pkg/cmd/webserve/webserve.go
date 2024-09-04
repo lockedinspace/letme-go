@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"net/http"
 	"io/ioutil"
-	"strconv"
 	"os/exec"
 	"encoding/json"
 	"embed"
@@ -20,7 +19,7 @@ type ContextRequest struct {
 }
 type MfaTokenRequest struct {
 	Context string `json:"context"`
-    MfaToken int `json:"mfaToken"`
+    MfaToken string `json:"mfaToken"` 
 	CredentialProcess bool `json:"credentialProcess"`
 	Renew bool `json:"renew"`
 }
@@ -93,37 +92,34 @@ func obtainHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Decode the body into the MfaTokenRequest
 	var req MfaTokenRequest
-    err = json.Unmarshal(body, &req)
+	err = json.Unmarshal(body, &req)
 	if err != nil {
 		http.Error(w, "Failed to decode request", http.StatusBadRequest)
 		return
 	}
 
 	// Determine if MFA token is provided
-	var cmd *exec.Cmd
-	if req.MfaToken > 0 {
-		if req.Renew {
-			mfaTokenStr := strconv.Itoa(req.MfaToken) 
-			cmd = exec.Command("letme", "obtain", req.Context, "--renew", "--inline-mfa", mfaTokenStr)
-		} else {
-			mfaTokenStr := strconv.Itoa(req.MfaToken) 
-			cmd = exec.Command("letme", "obtain", req.Context, "--inline-mfa", mfaTokenStr)
-		}
-	} else {
-		if req.CredentialProcess && req.Renew {
-			cmd = exec.Command("letme", "obtain", req.Context, "--renew")
-		} else if req.Renew {
-			cmd = exec.Command("letme", "obtain", req.Context, "--renew")
-		} else {
-			cmd = exec.Command("letme", "obtain", req.Context)
-		}
+	var cmdArgs []string
+	cmdArgs = append(cmdArgs, "obtain", req.Context)
+
+	if req.Renew {
+		cmdArgs = append(cmdArgs, "--renew")
+	}
+
+	if req.MfaToken != "" {
+		cmdArgs = append(cmdArgs, "--inline-mfa", req.MfaToken)
+	}
+
+	if req.CredentialProcess {
+		cmdArgs = append(cmdArgs, "--credential-process")
 	}
 
 	// Execute the command
+	cmd := exec.Command("letme", cmdArgs...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		errorMessage := fmt.Sprintf("Failed to obtain: %v, Output: %s", err, output)
-    	fmt.Println(errorMessage)
+		fmt.Println(errorMessage)
 		http.Error(w, errorMessage, http.StatusInternalServerError)
 		return
 	}

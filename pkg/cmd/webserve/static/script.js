@@ -124,7 +124,7 @@ function changeContext(contextName) {
 }
 function obtainCredentials(accountName) {
     console.log(`Obtaining credentials for: ${accountName}`);
-    //check if len(mfa_arn) > 0, prompt for mfa token, else go without mfa token
+    // Check if len(mfa_arn) > 0, prompt for MFA token, else go without MFA token
     fetch(`/context-values`)
         .then(response => response.json())
         .then(data => {
@@ -133,7 +133,7 @@ function obtainCredentials(accountName) {
             if (mfaArn && mfaArn.length > 0) {
                 // Prompt the user for MFA token input
                 const mfaToken = prompt("Please enter your MFA token:");
-                
+
                 // If a token was provided, include it in the request
                 if (mfaToken) {
                     fetch(`/obtain`, {
@@ -141,7 +141,8 @@ function obtainCredentials(accountName) {
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ context: accountName, mfaToken: Number(mfaToken), credentialProcess: credentialProcess(), renew: renew() }),
+                        // Keep mfaToken as a string to avoid stripping leading zeros
+                        body: JSON.stringify({ context: accountName, mfaToken: mfaToken, credentialProcess: credentialProcess(), renew: renew() }),
                     })
                     .then(response => {
                         if (response.ok) {

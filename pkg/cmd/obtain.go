@@ -51,7 +51,12 @@ within the AWS cli binary.`,
 			fmt.Println("letme: the specified account does not have any role configured. Nothing to assume.")
 			os.Exit(1)
 		}
-
+		
+		// if a special condition is met, credential-process while having mfa, ask the user for mfa and then assume it.
+		if len(letmeContext.AwsMfaArn) > 0 && credentialProcess {
+			os.Exit(33)
+		}
+		
 		if credentialProcess {
 			utils.AwsConfigFileCredentialsProcessV1(args[0], account.Region[0])
 		}
