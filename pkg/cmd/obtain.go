@@ -16,7 +16,7 @@ var obtainCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		utils.ConfigFileHealth()
 	},
-	Short: "Obtain account credentials.",
+	Short: "Obtain credentials from an entity.",
 	Long: `Obtain AWS STS assumed credentials once the user authenticates itself.
 Credentials will last 3600 seconds by default and can be used with the argument '--profile $ACCOUNT_NAME'
 within the AWS cli binary.`,
@@ -27,6 +27,7 @@ within the AWS cli binary.`,
 		renew, _ := cmd.Flags().GetBool("renew")
 		credentialProcess, _ := cmd.Flags().GetBool("credential-process")
 		localCredentialProcessFlagV1, _ := cmd.Flags().GetBool("v1")
+		federated, _ := cmd.Flags().GetBool("federated")
 
 		// get the current context
 		currentContext := utils.GetCurrentContext()
@@ -54,6 +55,7 @@ within the AWS cli binary.`,
 		
 		// if a special condition is met, credential-process while having mfa, ask the user for mfa and then assume it.
 		if len(letmeContext.AwsMfaArn) > 0 && credentialProcess {
+			//TODO!!
 			os.Exit(33)
 		}
 		
@@ -80,14 +82,28 @@ within the AWS cli binary.`,
 		} else {
 			authMethod = "assume-role"
 		}
-
+		if federated {
+			if len(account.Role) > 1 {
+				federatedAssumeRoleCredentials, federatedAssumeRoleRegion := utils.AssumeRoleChained(true, letmeContext, cfg, inlineTokenMfa, account, renew, localCredentialProcessFlagV1, authMethod)
+				signinURL, err := utils.GenerateSigninURL(federatedAssumeRoleCredentials.AccessKey, federatedAssumeRoleCredentials.SecretKey, federatedAssumeRoleCredentials.SessionToken, federatedAssumeRoleRegion.Region)
+				utils.CheckAndReturnError(err)
+				fmt.Printf("AWS Console sign-in URL: %s\n", signinURL)
+				os.Exit(1)
+			} else {
+				federatedAssumeRoleCredentials, federatedAssumeRoleRegion := utils.AssumeRole(true, letmeContext, cfg, inlineTokenMfa, account, renew, localCredentialProcessFlagV1, authMethod)
+				signinURL, err := utils.GenerateSigninURL(federatedAssumeRoleCredentials.AccessKey, federatedAssumeRoleCredentials.SecretKey, federatedAssumeRoleCredentials.SessionToken, federatedAssumeRoleRegion.Region)
+				utils.CheckAndReturnError(err)
+				fmt.Printf("AWS Console sign-in URL: %s\n", signinURL)
+				os.Exit(1)
+			}
+		}
 		var profileCredential utils.ProfileCredential
 		var profileConfig utils.ProfileConfig
 		switch {
 		case len(account.Role) > 1:
-			profileCredential, profileConfig = utils.AssumeRoleChained(letmeContext, cfg, inlineTokenMfa, account, renew, localCredentialProcessFlagV1, authMethod)
+			profileCredential, profileConfig = utils.AssumeRoleChained(false, letmeContext, cfg, inlineTokenMfa, account, renew, localCredentialProcessFlagV1, authMethod)
 		default:
-			profileCredential, profileConfig = utils.AssumeRole(letmeContext, cfg, inlineTokenMfa, account, renew, localCredentialProcessFlagV1, authMethod)
+			profileCredential, profileConfig = utils.AssumeRole(false, letmeContext, cfg, inlineTokenMfa, account, renew, localCredentialProcessFlagV1, authMethod)
 		}
 
 		utils.LoadAwsCredentials(account.Name, profileCredential)
@@ -100,10 +116,13 @@ func init() {
 	var credentialProcess bool
 	var v1 bool
 	var renew bool
+	var federated bool
 	RootCmd.AddCommand(obtainCmd)
 	obtainCmd.Flags().String("inline-mfa", "", "pass the mfa token without user prompt")
 	obtainCmd.Flags().BoolVarP(&renew, "renew", "", false, "force new credentials to be assumed")
 	obtainCmd.Flags().BoolVarP(&credentialProcess, "credential-process", "", false, "obtain credentials using the credential_process entry in your aws config file.")
 	obtainCmd.Flags().BoolVarP(&v1, "v1", "", false, "output credentials following the credential_process version 1 standard.")
+	obtainCmd.Flags().BoolVarP(&federated, "federated", "", false, "generate federated sign in url")
+
 
 }

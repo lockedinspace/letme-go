@@ -15,8 +15,8 @@ var listCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		utils.ConfigFileHealth()
 	},
-	Short: "List accounts.",
-	Long:  `List all the AWS accounts and their main region.`,
+	Short: "List entities.",
+	Long:  `List all the AWS assumable entities. Entities are roles which could be located in a different account, etc. `,
 	Run: func(cmd *cobra.Command, args []string) {
 		// get the current context
 		currentContext := utils.GetCurrentContext()
@@ -52,7 +52,7 @@ var listCmd = &cobra.Command{
 
 		switch output {
 		case "text":
-			fmt.Println("Listing accounts using '" + currentContext + "' context:\n")
+			fmt.Println("Listing entities using '" + currentContext + "' context:\n")
 			utils.ListTextOutput(tableData)
 		case "json":
 			utils.ListJsonOutput(tableData)

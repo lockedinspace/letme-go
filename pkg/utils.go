@@ -5,6 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"net/http"
+	"io/ioutil"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -970,10 +973,51 @@ func GetContextData(context string) *LetmeContext {
 
 	return letmeContext
 }
+func FederatedAssumeRole(letmeContext *LetmeContext, cfg aws.Config, inlineTokenMfa string, account *DynamoDbAccountConfig, renew bool, localCredentialProcessFlagV1 bool, authMethod string) (ProfileCredential) {
+	
+	sesAwsSts := sts.NewFromConfig(cfg)
+	var input *sts.AssumeRoleInput
 
-func AssumeRole(letmeContext *LetmeContext, cfg aws.Config, inlineTokenMfa string, account *DynamoDbAccountConfig, renew bool, localCredentialProcessFlagV1 bool, authMethod string) (ProfileCredential, ProfileConfig) {
+	switch {
+	case len(letmeContext.AwsMfaArn) > 0 && len(inlineTokenMfa) > 0:
+		input = &sts.AssumeRoleInput{
+			RoleArn:         &account.Role[0],
+			RoleSessionName: &letmeContext.AwsSessionName,
+			SerialNumber:    &letmeContext.AwsMfaArn,
+			TokenCode:       &inlineTokenMfa,
+			DurationSeconds: &letmeContext.AwsSessionDuration,
+		}
+	case len(letmeContext.AwsMfaArn) > 0 && len(inlineTokenMfa) <= 0:
+		fmt.Printf("Enter MFA one time pass code: ")
+		var tokenMfa string
+		fmt.Scanln(&tokenMfa)
+		input = &sts.AssumeRoleInput{
+			RoleArn:         &account.Role[0],
+			RoleSessionName: &letmeContext.AwsSessionName,
+			SerialNumber:    &letmeContext.AwsMfaArn,
+			TokenCode:       &tokenMfa,
+			DurationSeconds: &letmeContext.AwsSessionDuration,
+		}
+	default:
+		input = &sts.AssumeRoleInput{
+			RoleArn:         &account.Role[0],
+			RoleSessionName: &letmeContext.AwsSessionName,
+			DurationSeconds: &letmeContext.AwsSessionDuration,
+		}
+	}
+
+	resp, err := sesAwsSts.AssumeRole(context.TODO(), input)
+	CheckAndReturnError(err)
+	profileCredential := ProfileCredential{
+		AccessKey:    *resp.Credentials.AccessKeyId,
+		SecretKey:    *resp.Credentials.SecretAccessKey,
+		SessionToken: *resp.Credentials.SessionToken,
+	}
+	return profileCredential
+}
+func AssumeRole(federated bool, letmeContext *LetmeContext, cfg aws.Config, inlineTokenMfa string, account *DynamoDbAccountConfig, renew bool, localCredentialProcessFlagV1 bool, authMethod string) (ProfileCredential, ProfileConfig) {
 	//if credentials not expired
-	if CheckAccountAvailability(account.Name) && !localCredentialProcessFlagV1 && !renew {
+	if CheckAccountAvailability(account.Name) && !localCredentialProcessFlagV1 && !renew && !federated {
 		cachedCredentials := ReturnAccountCredentials(account.Name)
 		profileCredential := ProfileCredential{
 			AccessKey:    cachedCredentials["AccessKeyId"],
@@ -1023,7 +1067,7 @@ func AssumeRole(letmeContext *LetmeContext, cfg aws.Config, inlineTokenMfa strin
 
 	resp, err := sesAwsSts.AssumeRole(context.TODO(), input)
 	CheckAndReturnError(err)
-
+	
 	profileCredential := ProfileCredential{
 		AccessKey:    *resp.Credentials.AccessKeyId,
 		SecretKey:    *resp.Credentials.SecretAccessKey,
@@ -1035,6 +1079,8 @@ func AssumeRole(letmeContext *LetmeContext, cfg aws.Config, inlineTokenMfa strin
 		Region: account.Region[0],
 	}
 	switch {
+	case federated:
+		return profileCredential, profileConfig
 	case localCredentialProcessFlagV1:
 		fmt.Printf(CredentialsProcessOutput(profileCredential.AccessKey, profileCredential.SecretKey, profileCredential.SessionToken, *resp.Credentials.Expiration))
 		os.Exit(0)
@@ -1045,9 +1091,9 @@ func AssumeRole(letmeContext *LetmeContext, cfg aws.Config, inlineTokenMfa strin
 	return profileCredential, profileConfig
 }
 
-func AssumeRoleChained(letmeContext *LetmeContext, cfg aws.Config, inlineTokenMfa string, account *DynamoDbAccountConfig, renew bool, localCredentialProcessFlagV1 bool, authMethod string) (ProfileCredential, ProfileConfig) {
+func AssumeRoleChained(federated bool, letmeContext *LetmeContext, cfg aws.Config, inlineTokenMfa string, account *DynamoDbAccountConfig, renew bool, localCredentialProcessFlagV1 bool, authMethod string) (ProfileCredential, ProfileConfig) {
 	//if credentials not expired
-	if CheckAccountAvailability(account.Name) && !localCredentialProcessFlagV1 {
+	if CheckAccountAvailability(account.Name) && !localCredentialProcessFlagV1 && !federated {
 		cachedCredentials := ReturnAccountCredentials(account.Name)
 		profileCredential := ProfileCredential{
 			AccessKey:    cachedCredentials["AccessKeyId"],
@@ -1140,6 +1186,8 @@ func AssumeRoleChained(letmeContext *LetmeContext, cfg aws.Config, inlineTokenMf
 	}
 
 	switch {
+	case federated:
+		return profileCredential, profileConfig
 	case localCredentialProcessFlagV1:
 		fmt.Printf(CredentialsProcessOutput(profileCredential.AccessKey, profileCredential.SecretKey, profileCredential.SessionToken, *output.Credentials.Expiration))
 		os.Exit(0)
@@ -1189,4 +1237,63 @@ func ActiveAccounts() (string, error) {
 	}
 
 	return string(activeAccountsJSON), nil
+}
+
+func GenerateSigninURL(accessKey, secretKey, sessionToken, region string) (string, error) {
+	// Create a session map with temporary credentials
+	session := map[string]string{
+		"sessionId":    accessKey,
+		"sessionKey":   secretKey,
+		"sessionToken": sessionToken,
+	}
+
+	// Marshal the session into JSON
+	sessionJson, err := json.Marshal(session)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal session: %w", err)
+	}
+
+	// Construct the getSigninToken URL
+	getSigninTokenURL := "https://signin.aws.amazon.com/federation"
+	getSigninTokenURL += "?Action=getSigninToken"
+	getSigninTokenURL += "&Session=" + url.QueryEscape(string(sessionJson))
+
+	// Make the request to getSigninToken
+	resp, err := http.Get(getSigninTokenURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to get sign-in token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Unmarshal the response to get the sign-in token
+	var tokenResponse map[string]string
+	if err := json.Unmarshal(body, &tokenResponse); err != nil {
+		return "", fmt.Errorf("failed to unmarshal token response: %w", err)
+	}
+	signinToken, ok := tokenResponse["SigninToken"]
+	if !ok {
+		return "", fmt.Errorf("signin token not found in response")
+	}
+
+	// Construct the final AWS console sign-in URL with the region
+	// The console URL includes the region if specified
+	destination := "https://console.aws.amazon.com/"
+	if region != "" {
+		destination = fmt.Sprintf("https://%s.console.aws.amazon.com/console/home?region=%s", region, region)
+	}
+
+	// Final sign-in URL
+	signinURL := "https://signin.aws.amazon.com/federation"
+	signinURL += "?Action=login"
+	signinURL += "&Issuer=MyApp"
+	signinURL += "&Destination=" + url.QueryEscape(destination)
+	signinURL += "&SigninToken=" + signinToken
+
+	return signinURL, nil
 }
