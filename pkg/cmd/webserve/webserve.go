@@ -23,10 +23,14 @@ type MfaTokenRequest struct {
 	CredentialProcess bool `json:"credentialProcess"`
 	Renew bool `json:"renew"`
 }
+type MfaTokenFederatedRequest struct {
+	Context string `json:"context"`
+	MfaToken string `json:"mfaToken"`
+}
 var WebserveCmd = &cobra.Command{
 	Use:   "webserve",
 	Aliases: []string{"gui"},
-	Short: "Use letme with a graphic environment.",
+	Short: "Use letme with a graphic environment",
 	Long:  `Spin up a webserver which will enable the user to interact with letme graphically.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetString("port")
@@ -61,6 +65,7 @@ var WebserveCmd = &cobra.Command{
 		http.HandleFunc("/list", listAccountsHandler)
 		http.HandleFunc("/obtain", obtainHandler)
 		http.HandleFunc("/active-accounts", activeAccountsHandler)
+		http.HandleFunc("/obtain-federated", obtainFederatedHandler)
 		if err := http.ListenAndServe(":" + port, nil); err != nil {
 			utils.CheckAndReturnError(err)
 		}
@@ -82,6 +87,41 @@ func detectContentType(path string) string {
 	}
 	return "application/octet-stream"
 }
+func obtainFederatedHandler(w http.ResponseWriter, r *http.Request) {
+    body, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        http.Error(w, `{"error": "Failed to read request body"}`, http.StatusBadRequest)
+        return
+    }
+
+    var req MfaTokenFederatedRequest
+    err = json.Unmarshal(body, &req)
+    if err != nil {
+        http.Error(w, `{"error": "Failed to decode request"}`, http.StatusBadRequest)
+        return
+    }
+
+    var cmdArgs []string
+    cmdArgs = append(cmdArgs, "obtain", req.Context, "--federated")
+    if req.MfaToken != "" {
+        cmdArgs = append(cmdArgs, "--inline-mfa", req.MfaToken)
+    }
+
+    cmd := exec.Command("letme", cmdArgs...)
+    output, err := cmd.CombinedOutput()
+
+    if err != nil {
+        errorMessage := fmt.Sprintf(`{"error": "Failed to obtain: %v, Output: %s"}`, err, string(output))
+        http.Error(w, errorMessage, http.StatusInternalServerError)
+        return
+    }
+
+    // Assuming output from letme command is valid JSON
+    w.Header().Set("Content-Type", "application/json")
+    w.Write(output)
+}
+
+
 func obtainHandler(w http.ResponseWriter, r *http.Request) {
 	// Read the entire body
 	body, err := ioutil.ReadAll(r.Body)

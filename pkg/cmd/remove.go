@@ -11,7 +11,7 @@ import (
 
 var removeCmd = &cobra.Command{
 	Use:   "remove",
-	Short: "Locally remove the credentials.",
+	Short: "Locally remove the credentials",
 	Long: `Remove the credentials entry in your AWS files.
 This will not remove anything on the DynamoDB side. Use it for
 cleanup purposes and sanitizing your '$HOME/.aws/credentials'

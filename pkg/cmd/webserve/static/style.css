@@ -81,7 +81,7 @@
   -webkit-user-select: none;
   touch-action: manipulation;
   white-space: nowrap;
-  margin: 10px;
+  margin: 20px;
 }
 .button-15 {
   background-image: linear-gradient(#fdfdfd ,#40d463);
@@ -123,4 +123,52 @@
   border-color: #e77600;
   box-shadow: rgba(228, 121, 17, .5) 0 0 3px 2px;
   outline: 0;
+}
+.modal {
+  display: none; 
+  overflow-x: auto;
+  position: fixed;
+  z-index: 500;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5); /* Semi-transparent background */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 600px;
+  text-align: center;
+  border-radius: 8px;
+}
+
+.modal-content p {
+  word-break: break-all; /* Allow the URL to wrap */
+}
+
+.button-group {
+  margin-top: 20px;
+}
+
+.modal-btn {
+  background-color: #4CAF50; /* Green */
+  color: white;
+  padding: 10px 20px;
+  margin: 5px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.modal-btn.copy {
+  background-color: #008CBA; /* Blue for copy */
+}
+
+.modal-btn.cancel {
+  background-color: #f44336; /* Red for cancel */
 }

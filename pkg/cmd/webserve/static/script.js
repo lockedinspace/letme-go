@@ -10,12 +10,33 @@ fetch('/list')
         const container = document.querySelector('.accounts-list');
 
         data.items.forEach(item => {
-            const itemDiv = document.createElement('button');
-            itemDiv.classList.add('button-14'); 
-            itemDiv.textContent = item.name; 
+            // Create a div to hold the item name and buttons
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('item-container');  // Add a class for styling if needed
 
-            itemDiv.onclick = () => obtainCredentials(item.name);
+            // Create a span to hold the item name
+            const itemName = document.createElement('span');
+            itemName.textContent = item.name;  // Set the text to the account name
+            itemName.classList.add('account-name');  // Optional class for styling
 
+            // Create the CLI button
+            const cliButton = document.createElement('button');
+            cliButton.classList.add('button-14'); 
+            cliButton.textContent = 'CLI';
+            cliButton.onclick = () => obtainCredentials(item.name);  // Set onclick for CLI button
+
+            // Create the Federated button
+            const federatedButton = document.createElement('button');
+            federatedButton.classList.add('button-14'); 
+            federatedButton.textContent = 'Federated';
+            federatedButton.onclick = () => obtainFederatedCredentials(item.name);  // Set onclick for Federated button
+
+            // Append the item name and both buttons to the div
+            itemDiv.appendChild(itemName);
+            itemDiv.appendChild(cliButton);
+            itemDiv.appendChild(federatedButton);
+
+            // Append the item div to the main container
             container.appendChild(itemDiv);
         });
     })
@@ -122,6 +143,94 @@ function changeContext(contextName) {
     })
     .catch(error => console.error('Error:', error));
 }
+function obtainFederatedCredentials(accountName) {
+    console.log(`Obtaining federated credentials for: ${accountName}`);
+
+    fetch('/context-values')
+        .then(response => response.json())
+        .then(data => {
+            const mfaArn = data.AwsMfaArn;
+            if (mfaArn && mfaArn.length > 0) {
+                const mfaToken = prompt("Please enter your MFA token:");
+                if (mfaToken) {
+                    const requestBody = { context: accountName, mfaToken: mfaToken };
+                    console.log('Request Body:', JSON.stringify(requestBody));
+
+                    fetch('/obtain-federated', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestBody),
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const contentType = response.headers.get('Content-Type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json(); // Parse JSON only if valid
+                        } else {
+                            return response.text(); // Handle non-JSON response (like error message)
+                        }
+                    })
+                    .then(data => {
+                        if (typeof data === 'string') {
+                            console.error('Non-JSON response:', data);
+                            alert(`Error: ${data}`);
+                        } else {
+                            console.log('Raw Response:', data);
+                            if (data.aws_console_sign_in_url) {
+                                displayModal(data.aws_console_sign_in_url);
+                            } else {
+                                console.error('Sign-in URL not found in the response.');
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                } else {
+                    console.error('MFA token is required.');
+                }
+            } else {
+                const requestBody = { context: accountName };
+                console.log('Request Body:', JSON.stringify(requestBody));
+
+                fetch('/obtain-federated', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const contentType = response.headers.get('Content-Type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json(); // Parse JSON only if valid
+                    } else {
+                        return response.text(); // Handle non-JSON response (like error message)
+                    }
+                })
+                .then(data => {
+                    if (typeof data === 'string') {
+                        console.error('Non-JSON response:', data);
+                        alert(`Error: ${data}`);
+                    } else {
+                        console.log('Raw Response:', data);
+                        if (data.aws_console_sign_in_url) {
+                            displayModal(data.aws_console_sign_in_url);
+                        } else {
+                            console.error('Sign-in URL not found in the response.');
+                        }
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        })
+        .catch(error => console.error('Error fetching context values:', error));
+}
 function obtainCredentials(accountName) {
     console.log(`Obtaining credentials for: ${accountName}`);
     // Check if len(mfa_arn) > 0, prompt for MFA token, else go without MFA token
@@ -180,13 +289,17 @@ function obtainCredentials(accountName) {
 
 function filterAccounts() {
     const input = document.getElementById('searchBar').value.toLowerCase().trim();
-    const accountItems = document.getElementsByClassName('button-14');
+    const accountItems = document.getElementsByClassName('item-container');
+    
     for (let item of accountItems) {
+        // Get the text content of the span with class 'account-name' within each item
+        const accountName = item.querySelector('.account-name').textContent.toLowerCase();
+
         // Create a regex pattern for fuzzy matching
         const pattern = new RegExp(input.split('').join('.*'), 'i');
 
-        // Check if the item text matches the pattern
-        if (pattern.test(item.textContent.toLowerCase())) {
+        // Check if the account name matches the pattern
+        if (pattern.test(accountName)) {
             item.style.display = ''; // Show the item if it matches
         } else {
             item.style.display = 'none'; // Hide the item if it doesn't match
@@ -198,4 +311,26 @@ function credentialProcess(){
 }
 function renew(){
     return document.getElementById('renew').checked;
+}
+function displayModal(url) {
+    document.getElementById('signInUrl').innerText = url;
+    document.getElementById('urlModal').style.display = 'block'; // Show the modal
+}
+
+function closeModal() {
+    document.getElementById('urlModal').style.display = 'none'; // Hide the modal
+}
+
+function openInNewTab() {
+    const url = document.getElementById('signInUrl').innerText;
+    window.open(url, '_blank');
+}
+
+function copyToClipboard() {
+    const urlText = document.getElementById('signInUrl').innerText;
+    navigator.clipboard.writeText(urlText).then(() => {
+        alert('URL copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy the text: ', err);
+    });
 }

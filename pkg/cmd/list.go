@@ -15,7 +15,7 @@ var listCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		utils.ConfigFileHealth()
 	},
-	Short: "List entities.",
+	Short: "List entities",
 	Long:  `List all the AWS assumable entities. Entities are roles which could be located in a different account, etc. `,
 	Run: func(cmd *cobra.Command, args []string) {
 		// get the current context

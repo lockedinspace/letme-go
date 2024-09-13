@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var currentVersion = "v0.2.2-rc4"
+var currentVersion = "v0.2.2-rc5"
 var versionPrettyName = "Refurbished beagle"
 var RootCmd = &cobra.Command{
 	Use:   "letme",
@@ -55,7 +55,7 @@ func getVersions() string {
 }
 func init() {
 	var Version bool
-	RootCmd.PersistentFlags().BoolVarP(&Version, "version", "v", false, "list current version for letme")
+	RootCmd.PersistentFlags().BoolVarP(&Version, "version", "v", false, "print current version")
 }
 
 func Execute() {

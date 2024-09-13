@@ -15,11 +15,11 @@
         <div class="title"><h1>letme's graphic interface</h1> <h3>Cloud tools</h3></div>
         <div class="clioutput contexts"><h3>Contexts</h3>Active context highlighted in green</div>
         <div class="clioutput active-context-values"><h3>Active context values</h3></div>
-        <div class="clioutput active-accounts"><h3>Active accounts</h3></div>
+        <div class="clioutput active-accounts"><h3>Active entities</h3></div>
         <div class="accounts">
           <div class="accounts-header">
-              <h3>Accounts</h3>
-              <p>Click on any account to obtain credentials</p>
+              <h3>Entities</h3>
+              <p>Click on any entity to obtain its credentials</p>
               
               
               <input type="checkbox" id="renew" name="renew" value="" onclick="renew()">
@@ -31,8 +31,19 @@
             </div>
             <div class="accounts-list"></div>
         </div>
+        <div id="urlModal" class="modal">
+          <div class="modal-content">
+              <h2>AWS Console Sign-In URL</h2>
+              <p id="signInUrl">URL will appear here</p>
+              <div class="button-group">
+                  <button class="modal-btn" onclick="openInNewTab()">Open in New Tab</button>
+                  <button class="modal-btn copy" onclick="copyToClipboard()">Copy to Clipboard</button>
+                  <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+              </div>
+          </div>
+      </div>
         <div class="footer"></div>
-        <div class="clioutput version">v0.2.2-rc4</div>
+        <div class="clioutput version">v0.2.2-rc5</div>
       </div>
     </main>
   <script src="./script.js" defer></script>

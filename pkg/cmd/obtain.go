@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-
+	"encoding/json"
 	"github.com/aws/aws-sdk-go-v2/config"
 	utils "github.com/lockedinspace/letme/pkg"
 	"github.com/spf13/cobra"
@@ -16,7 +16,7 @@ var obtainCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		utils.ConfigFileHealth()
 	},
-	Short: "Obtain credentials from an entity.",
+	Short: "Obtain credentials from an entity",
 	Long: `Obtain AWS STS assumed credentials once the user authenticates itself.
 Credentials will last 3600 seconds by default and can be used with the argument '--profile $ACCOUNT_NAME'
 within the AWS cli binary.`,
@@ -67,7 +67,7 @@ within the AWS cli binary.`,
 		if len(letmeContext.AwsSessionName) == 0 && !localCredentialProcessFlagV1 {
 			fmt.Println("Using default session name: '" + args[0] + "-letme-session' with context: '" + currentContext + "'")
 			letmeContext.AwsSessionName = args[0] + "-letme-session"
-		} else if !localCredentialProcessFlagV1 {
+		} else if !localCredentialProcessFlagV1 && !federated {
 			fmt.Println("Assuming role with the following session name: '" + letmeContext.AwsSessionName + "' and context: '" + currentContext + "'")
 		}
 
@@ -83,18 +83,25 @@ within the AWS cli binary.`,
 			authMethod = "assume-role"
 		}
 		if federated {
+			type SignInURL struct {
+				URL string `json:"aws_console_sign_in_url"`
+			}
 			if len(account.Role) > 1 {
 				federatedAssumeRoleCredentials, federatedAssumeRoleRegion := utils.AssumeRoleChained(true, letmeContext, cfg, inlineTokenMfa, account, renew, localCredentialProcessFlagV1, authMethod)
 				signinURL, err := utils.GenerateSigninURL(federatedAssumeRoleCredentials.AccessKey, federatedAssumeRoleCredentials.SecretKey, federatedAssumeRoleCredentials.SessionToken, federatedAssumeRoleRegion.Region)
 				utils.CheckAndReturnError(err)
-				fmt.Printf("AWS Console sign-in URL: %s\n", signinURL)
-				os.Exit(1)
+				data := SignInURL{URL: signinURL}
+				jsonData, err := json.MarshalIndent(data, "", "  ")
+				fmt.Println(string(jsonData))
+				os.Exit(0)
 			} else {
 				federatedAssumeRoleCredentials, federatedAssumeRoleRegion := utils.AssumeRole(true, letmeContext, cfg, inlineTokenMfa, account, renew, localCredentialProcessFlagV1, authMethod)
 				signinURL, err := utils.GenerateSigninURL(federatedAssumeRoleCredentials.AccessKey, federatedAssumeRoleCredentials.SecretKey, federatedAssumeRoleCredentials.SessionToken, federatedAssumeRoleRegion.Region)
 				utils.CheckAndReturnError(err)
-				fmt.Printf("AWS Console sign-in URL: %s\n", signinURL)
-				os.Exit(1)
+				data := SignInURL{URL: signinURL}
+				jsonData, err := json.MarshalIndent(data, "", "  ")
+				fmt.Println(string(jsonData))
+				os.Exit(0)
 			}
 		}
 		var profileCredential utils.ProfileCredential

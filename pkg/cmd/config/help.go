@@ -13,7 +13,7 @@ var ConfigCmd = &cobra.Command{
 		utils.LetmeConfigCreate()
 		utils.ConfigFileHealth()
 	},
-	Short: "Configure letme.",
+	Short: "Configure letme",
 	Long:  `Personalize your letme experience, manage contexts and more.`,
 	// Args: cobra.MinimumNFlags(1),
 	Run: func(cmd *cobra.Command, args []string) {
