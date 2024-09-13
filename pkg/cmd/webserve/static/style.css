@@ -19,24 +19,32 @@
   
   .active-accounts { grid-area: 2 / 3 / 3 / 4; margin: 10px;}
   
-  .accounts { grid-area: 3 / 1 / 4 / 4; margin: 10px; max-height: 400px; overflow-y: auto; padding-top: 0; position: relative;}
-  
+  .accounts {
+    grid-area: 3 / 1 / 4 / 4;
+    margin: 10px;
+    padding-top: 0;
+    position: relative;
+    overflow: hidden; /* Ensure the container itself does not scroll */
+  }  
   .footer { grid-area: 4 / 1 / 5 / 4; margin: 10px;}
   
-  .version { grid-area: 4 / 2 / 5 / 3; margin: 10px; text-align: center;}
+  .version { grid-area: 4 / 2 / 5 / 3; margin: 10px; position: sticky; text-align: center;}
   
   .accounts-header {
-    position: sticky; /* Changed from absolute to sticky */
+    position: sticky; /* Sticky header to keep it fixed */
     top: 0;
     background-color: white; /* Ensure the header doesn't overlap content */
     z-index: 10; /* Keep the header above other content */
     padding: 10px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Optional shadow for better separation */
+    overflow: hidden; /* Prevent scroll in header */
   }
 
-.accounts-list {
-    margin-top: 10px; /* Small gap between the header and the list */
-}
+  .accounts-list {
+    max-height: 300px; /* Set your desired max height for the scrollable area */
+    overflow-y: auto;  /* Enable scrolling inside this div */
+    margin-top: 10px;  /* Small gap between the header and the list */
+  }
 .button-13 {
   background-image: linear-gradient(#f7f8fa ,#e7e9ec);
   border-color: #adb1b8 #a2a6ac #8d9096;

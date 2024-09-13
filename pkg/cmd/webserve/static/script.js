@@ -154,7 +154,6 @@ function obtainFederatedCredentials(accountName) {
                 const mfaToken = prompt("Please enter your MFA token:");
                 if (mfaToken) {
                     const requestBody = { context: accountName, mfaToken: mfaToken };
-                    console.log('Request Body:', JSON.stringify(requestBody));
 
                     fetch('/obtain-federated', {
                         method: 'POST',
@@ -179,7 +178,6 @@ function obtainFederatedCredentials(accountName) {
                             console.error('Non-JSON response:', data);
                             alert(`Error: ${data}`);
                         } else {
-                            console.log('Raw Response:', data);
                             if (data.aws_console_sign_in_url) {
                                 displayModal(data.aws_console_sign_in_url);
                             } else {
@@ -193,7 +191,6 @@ function obtainFederatedCredentials(accountName) {
                 }
             } else {
                 const requestBody = { context: accountName };
-                console.log('Request Body:', JSON.stringify(requestBody));
 
                 fetch('/obtain-federated', {
                     method: 'POST',
@@ -218,7 +215,6 @@ function obtainFederatedCredentials(accountName) {
                         console.error('Non-JSON response:', data);
                         alert(`Error: ${data}`);
                     } else {
-                        console.log('Raw Response:', data);
                         if (data.aws_console_sign_in_url) {
                             displayModal(data.aws_console_sign_in_url);
                         } else {
